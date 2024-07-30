@@ -206,9 +206,13 @@
         state: absent
       notify:
         - Reload Nginx
+        
     - name: Create log directory
+      file:
         path: /var/log/stage_5b
+        state: directory
         owner: hng
+        group: hng
         mode: '0755'
 
     - name: Set up logging in .env
