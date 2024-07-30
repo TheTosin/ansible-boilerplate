@@ -4,9 +4,9 @@
 This Ansible playbook automates the deployment and configuration of a Java boilerplate application. It sets up the environment, installs necessary software, configures PostgreSQL and RabbitMQ, builds the Java application, and sets up Nginx as a reverse proxy.
 
 ## Requirements
-• Ansible installed on the control machine.
-• Target host running Ubuntu.
-• Access to the target host with sudo privileges.
+- Ansible installed on the control machine.
+- Target host running Ubuntu.
+- Access to the target host with sudo privileges.
 
 ## Variables
 • db_user: PostgreSQL database user (default: "admin").
