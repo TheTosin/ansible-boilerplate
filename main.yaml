@@ -41,6 +41,10 @@
         group: hng
         mode: '0755'
 
+    - name: Add /opt/stage_5b as a safe directory for Git
+      ansible.builtin.shell:
+        cmd: git config --global --add safe.directory /opt/stage_5b
+
     - name: Clone repository
       git:
         repo: "https://github.com/hngprojects/hng_boilerplate_java_web.git"
