@@ -1,4 +1,4 @@
- ---
+---
 - name: Deploy and configure Java boilerplate application
   hosts: hng
   become: yes
@@ -81,17 +81,23 @@
       loop:
         - "HOST=127.0.0.1"
         - "PORT=3000"
-   - name: Update pom.ml with Spring Boot dependencies
-     template:
-       src: pom.xml.j2
-       dest: /opt/stage_5b/pom.xml
-     become: yes
+
+    - name: Update pom.ml with Spring Boot dependencies
+      template:
+        src: pom.xml.j2
+        dest: /opt/stage_5b/pom.xml
+      become: yes
 
     - name: Configure RabbitMQ
       systemd:
         name: rabbitmq-server
         state: started
         enabled: yes
+
+    - name: Resolve Maven dependencies
+      command: mvn dependency:resolve
+      args:
+        chdir: /opt/stage_5b
 
     - name: Create application.properties
       copy:
@@ -116,7 +122,7 @@
       become_user: hng
 
     - name: Build Java application
-      command: ./mvnw clean package 
+      command: ./mvnw clean package
       args:
         chdir: /opt/stage_5b
       become_user: hng
