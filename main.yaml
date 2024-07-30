@@ -47,7 +47,6 @@
         version: "devops"
         dest: /opt/stage_5b
       become: yes
-      become_user: hng
 
     - name: Configure PostgreSQL
       block:
@@ -119,13 +118,11 @@
           #spring.flyway.password={{ db_password }}
           #spring.flyway.baseline-version=1
         dest: "/opt/stage_5b/src/main/resources/application.properties"
-      become_user: hng
 
     - name: Build Java application
       command: ./mvnw clean package
       args:
         chdir: /opt/stage_5b
-      become_user: hng
 
     - name: Create systemd service file
       copy:
