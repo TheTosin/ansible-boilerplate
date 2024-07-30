@@ -1,14 +1,36 @@
 ---
-- name: Deploy and configure the boilerplate application
+- name: Deploy and configure Java boilerplate application
   hosts: hng
   become: yes
 
+  vars:
+    db_user: "admin"
+    db_name: "stage_5b_db"
+    db_password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=12') }}"
+
   tasks:
-    - name: Create user 'hng'
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - git
+          - openjdk-17-jdk
+          - maven
+          - postgresql
+          - postgresql-contrib
+          - python3-psycopg2
+          - rabbitmq-server
+          - nginx
+        state: present
+
+    - name: Create hng user with sudo privileges
       user:
         name: hng
-        state: present
         groups: sudo
+        state: present
         shell: /bin/bash
 
     - name: Ensure /opt/stage_5b directory exists
@@ -17,132 +39,93 @@
         state: directory
         owner: hng
         group: hng
-
-    - name: Install required packages
-      apt:
-        name:
-          - git
-          - nginx
-          - postgresql
-          - rabbitmq-server
-          - mevan
-          - openjdk-17-jdk
-      state: present
-      update_cache: yes
+        mode: '0755'
 
     - name: Clone repository
       git:
-        repo: 'https://github.com/hngprojects/hng_boilerplate_java_web.git'
+        repo: "https://github.com/hngprojects/hng_boilerplate_java_web.git"
+        version: "devops"
         dest: /opt/stage_5b
-        version: devops
-        force: yes
-                accept_hostkey: yes
-      become_user: hng
       become: yes
-
-    - name: Build Java application
-      command: mvn clean package
-      args:
-        chdir: "/opt/stage_5b"
       become_user: hng
 
-    - name: Install PostgreSQL
-      apt:
-        name: postgresql
-        state: present
-        update_cache: yes
-      become: yes
+    - name: Configure PostgreSQL
+      block:
+        - name: Create PostgreSQL user
+          command: sudo -u postgres psql -c "CREATE USER {{ db_user }} WITH PASSWORD '{{ db_password }}' CREATEDB SUPERUSER;"
+          ignore_errors: yes
 
-    - name: Start and enable PostgreSQL service
-      service:
-        name: postgresql
-        state: started
-        enabled: yes
-      become: yes
+        - name: Create PostgreSQL database
+          command: sudo -u postgres psql -c "CREATE DATABASE {{ db_name }} OWNER {{ db_user }};"
+          ignore_errors: yes
 
-    - name: Generate PostgreSQL credentials
-          set_fact:
-       pg_admin: "pg_admin_user"
-       pg_password: "lookup('password', '/dev/null length=20 chars=ascii_letters')"
-
-    - name: Set PostgreSQL password and create user
-      become_user: postgres
-      postgresql_user:
-        name: pg_admin
-        password: "pg_password"
-        state: present
+    - name: Ensure /var/secrets directory exists
+      file:
+        path: /var/secrets
+        state: directory
+        mode: '0750'
+        owner: root
+        group: root
 
     - name: Save PostgreSQL credentials
       copy:
-        content:
-          user: pg_admin
-          password: pg_password
+        content: "{{ db_user }}:{{ db_password }}"
         dest: /var/secrets/pg_pw.txt
-        owner: hng
-        group: hng
         mode: '0600'
-      become: yes
 
-    - name: Install Java
-      apt:
-        name: default-jdk
-        state: present
-        update_cache: yes
-      become: yes
+    - name: Ensure environment variables are set
+      lineinfile:
+        path: /opt/stage_5b/.env
+        line: "{{ item }}"
+        create: yes
+      loop:
+        - "HOST=127.0.0.1"
+        - "PORT=3000"
 
-    - name: Install Maven (if needed)
-      apt:
-        name: maven
-        state: present
-        update_cache: yes
-      become: yes
-
-    - name: Build Java application with Maven
-          shell: mvn clean install -DskipTests
-      args:
-        chdir: /opt/stage_5b
-      become_user: hng
-      become: yes
-
-   - name: Ensure environment variables are set
-     lineinfile:
-       path: /opt/stage_5b/.env
-       line: "item"
-       create: yes
-       owner: hng
-       group: hng
-       mode: '0600'
-     loop:
-       - "HOST=127.0.0.1"
-       - "PORT=3000"
-     become: yes
-
-    - name: Install RabbitMQ
-      hosts: hng
-      become: yes
-
-    - name: Install RabbitMQ server
-      apt:
-        name: rabbitmq-server
-        state: present
-        update_cache: yes
-        become: yes
-
-    - name: Enable and start RabbitMQ service
+    - name: Configure RabbitMQ
       systemd:
         name: rabbitmq-server
-        enabled: yes
         state: started
+        enabled: yes
 
-    - name: Configure application properties
-      template:
-              src: application.properties.j2
+    - name: Create application.properties
+      copy:
+        content: |
+          spring.datasource.url=jdbc:postgresql://localhost:5432/{{ db_name }}
+          spring.datasource.username={{ db_user }}
+          spring.datasource.password={{ db_password }}
+          spring.jpa.hibernate.ddl-auto=update
+          server.port=3000
+          spring.rabbitmq.host=localhost
+          spring.rabbitmq.port=5672
+          spring.rabbitmq.username=guest
+          spring.rabbitmq.password=guest
         dest: "/opt/stage_5b/src/main/resources/application.properties"
       become_user: hng
 
-    - name: Set up application service
-      template:
-        src: app.service.j2
+    - name: Build Java application
+      command: ./mvnw clean package -DskipTests
+      args:
+        chdir: /opt/stage_5b
+      become_user: hng
+
+    - name: Create systemd service file
+      copy:
+        content: |
+          [Unit]
+          Description=Stage 5B Java Application
+          After=network.target
+
+          [Service]
+          User=hng
+          WorkingDirectory=/opt/stage_5b
+          ExecStart=/usr/bin/java -jar /opt/stage_5b/target/java.jar
+          Restart=always
+          StandardOutput=append:/var/log/stage_5b/out.log
+          StandardError=append:/var/log/stage_5b/error.log
+
+          [Install]
+          WantedBy=multi-user.target
         dest: /etc/systemd/system/stage_5b.service
 
     - name: Start and enable application service
@@ -150,6 +133,23 @@
         name: stage_5b
         state: started
         enabled: yes
+        daemon_reload: yes
+
+    - name: Add Nginx signing key
+      apt_key:
+        url: https://nginx.org/keys/nginx_signing.key
+        state: present
+
+    - name: Add Nginx repository
+      apt_repository:
+        repo: "deb http://nginx.org/packages/ubuntu {{ ansible_distribution_release }} nginx"
+        state: present
+        filename: nginx
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
 
     - name: Install Nginx
       apt:
@@ -158,61 +158,73 @@
       become: yes
 
     - name: Configure Nginx reverse proxy application
-      template:
-        src: nginx_config.j2
+      copy:
+        content: |
+          server {
+              listen 80;
+              server_name _;
+
+              location / {
+                  proxy_pass http://127.0.0.1:3000;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+              }
+          }
         dest: /etc/nginx/sites-available/stage_5b
       notify:
-        - Restart Nginx
-      become: yes
+        - Reload Nginx
 
     - name: Enable Nginx site
       file:
         src: /etc/nginx/sites-available/stage_5b
         dest: /etc/nginx/sites-enabled/stage_5b
         state: link
-        notify: restart nginx
-              become: yes
+      notify:
+        - Reload Nginx
 
     - name: Remove default Nginx configuration
       file:
         path: /etc/nginx/sites-enabled/default
         state: absent
-      notify: restart nginx
-      become: yes
+      notify:
+        - Reload Nginx
 
-    - name: Set up logging
-      lineinfile:
+    - name: Create log directory
+      file:
+        path: /var/log/stage_5b
+        state: directory
+        owner: hng
+        group: hng
+        mode: '0755'
+
+    - name: Set up logging in .env
+      blockinfile:
         path: /opt/stage_5b/.env
-        line: |
+        block: |
           LOG_STDERR=/var/log/stage_5b/error.log
           LOG_STDOUT=/var/log/stage_5b/out.log
-      create: yes
-      owner: hng
-      group: hng
-      mode: 0644
-      become: yes
+        create: yes
 
-   - name: Set up log rotation for application logs
-     copy:
-       dest: /etc/logrotate.d/stage_5b
-       content: |
-         /var/log/stage_5b/*.log {
-           daily
-           missingok
-           rotate 14
-           compress
-           delaycompress
-           notifempty
-           create 0640 hng hng
-           sharedscripts
-           postrotate
-             systemctl reload nginx > /dev/null 2>&1 || true
-           endscript
-         }
-         
+    - name: Configure log rotation
+      copy:
+        dest: /etc/logrotate.d/stage_5b
+        content: |
+          /var/log/stage_5b/*.log {
+            daily
+            missingok
+            rotate 7
+            compress
+            delaycompress
+            notifempty
+            create 0644 hng hng
+            sharedscripts
+            postrotate
+              systemctl reload nginx > /dev/null 2>&1 || true
+            endscript
+          }
+
   handlers:
-    - name: Restart Nginx
-      service:
+    - name: Reload Nginx
+      systemd:
         name: nginx
-        state: restarted
-      become: yes
+        state: reloaded
