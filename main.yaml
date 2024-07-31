@@ -111,6 +111,8 @@
       command: mvn clean package
       args:
         chdir: /opt/stage_5b
+      notify:
+        - Restart application service
 
     - name: Create systemd service file
       copy:
@@ -130,6 +132,13 @@
           [Install]
           WantedBy=multi-user.target
         dest: /etc/systemd/system/stage_5b.service
+
+    - name: Start and enable application service
+      systemd:
+        name: stage_5b
+        state: started
+        enabled: yes
+        daemon_reload: yes
 
     - name: Add Nginx signing key
       apt_key:
@@ -220,12 +229,10 @@
           }
 
   handlers:
-    - name: Start and enable application service
-      systemd:
-        name: stage_5b
-        state: started
-        enabled: yes
-        daemon_reload: yes
+    - name: Restart application service
+    systemd:
+      name: stage_5b
+      state: restarted
   
     - name: Reload Nginx
       systemd:
