@@ -230,10 +230,10 @@
 
   handlers:
     - name: Restart application service
-    systemd:
-      name: stage_5b
-      state: restarted
-  
+      systemd:
+        name: stage_5b
+        state: restarted
+
     - name: Reload Nginx
       systemd:
         name: nginx
