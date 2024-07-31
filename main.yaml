@@ -6,7 +6,7 @@
   vars:
     db_user: "admin"
     db_name: "stage_5b_db"
-    db_password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=12') }}"
+    db_password: "{{ lookup('password', '/dev/null chars=ascii_letters length=16') }}"
 
   tasks:
     - name: Update apt cache
@@ -102,7 +102,7 @@
       args:
         chdir: /opt/stage_5b
 
-    - name: Copy application.properties 
+    - name: Copy application.properties
       template:
         src: application.properties.j2
         dest: /opt/stage_5b/src/main/resources/application.properties
