@@ -55,7 +55,7 @@
     - name: Configure PostgreSQL
       block:
         - name: Create PostgreSQL user
-          command: sudo -u postgres psql -c "CREATE USER '{{ db_user }}' WITH PASSWORD '{{ db_password }}'; ALTER USER {{ db_user }} WITH SUPERUSER;"
+          command: sudo -u postgres psql -c "CREATE USER '{{ db_user }}' WITH PASSWORD '{{ db_password }}'; ALTER USER '{{ db_user }}' WITH SUPERUSER;"
           ignore_errors: yes
 
         - name: Create PostgreSQL database
