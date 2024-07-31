@@ -6,7 +6,7 @@
   vars:
     db_user: "admin"
     db_name: "stage_5b_db"
-    db_password: "{{ lookup('password', '/dev/null chars=ascii_letters length=16') }}"
+    db_password: "password"
 
   tasks:
     - name: Update apt cache
