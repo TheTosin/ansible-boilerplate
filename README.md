@@ -1,95 +1,80 @@
 # Deploy and Configure Java Boilerplate Application
 
-## Overview
-This Ansible playbook automates the deployment and configuration of a Java boilerplate application. It sets up the environment, installs necessary software, configures PostgreSQL and RabbitMQ, builds the Java application, and sets up Nginx as a reverse proxy.
+This Ansible playbook sets up a Java boilerplate application on a fresh Ubuntu 22.04 server. It installs the necessary packages, configures PostgreSQL and RabbitMQ, deploys the Java application, and sets up Nginx as a reverse proxy.
 
-## Requirements
-• Ansible installed on the control machine.
-• Target host running Ubuntu.
-• Access to the target host with sudo privileges.
+## Prerequisites
 
-## Variables
-• db_user: PostgreSQL database user (default: "admin").
-• db_name: PostgreSQL database name (default: "stage_5b_db").
-• db_password: PostgreSQL database password (generated randomly).
+Ansible installed on your local machine.
+A fresh Ubuntu 22.04 server with SSH access.
+User with sudo privileges.
 
-## Playbook Breakdown
-1. Update apt Cache
-Updates the package index to ensure the latest versions of packages.
+## Playbook Details
 
-2. Install Required Packages
-Installs the following packages:
+Playbook Name: Deploy and configure Java boilerplate application
+Host: hng
+User: hng (created during playbook execution)
+Database User: admin
+Database Name: stage_5b_db
+Database Password: password
+Java Version: OpenJDK 17
+Maven Version: Latest available in Ubuntu repository
+Nginx Version: 1.26.*
 
-• git
-• openjdk-17-jdk
-• maven
-• postgresql
-• postgresql-contrib
-• python3-psycopg2
-• rabbitmq-server
-• nginx
+## Installation
+Clone the Repository:
 
-3. Create User
-Creates a user named hng with sudo privileges.
+bash
+Copy code
+git clone https://github.com/hngprojects/hng_boilerplate_java_web.git -b devops /opt/stage_5b
+Update the Ansible Inventory:
+Add your server details to the Ansible inventory file.
 
-4. Ensure Directory Exists
-Creates the /opt/stage_5b directory with appropriate permissions.
+Run the Playbook:
 
-5. Clone Repository
-Clones the Java boilerplate repository from GitHub into the /opt/stage_5b directory.
+css
+Copy code
+ansible-playbook -i inventory_file playbook.yml
 
-6. Configure PostgreSQL
-Creates a PostgreSQL user and database with the provided credentials.
+## Tasks Overview
+1. System Update and Package Installation:
+Updates the apt cache.
+Installs required packages including Git, OpenJDK, Maven, PostgreSQL, RabbitMQ, and Nginx.
+User Setup:
 
-8. Save PostgreSQL Credentials
-Stores PostgreSQL credentials in /var/secrets/pg_pw.txt.
+Creates a user hng with sudo privileges.
+Repository Setup:
 
-9. Ensure Environment Variables are Set
-Adds necessary environment variables to /opt/stage_5b/.env.
+Clones the Java boilerplate application repository.
+Database Configuration:
 
-10. Configure RabbitMQ
-Ensures RabbitMQ is started and enabled.
+Sets up PostgreSQL with a new user and database.
+Saves PostgreSQL credentials securely.
+Environment Configuration:
 
-11. Create application.properties
-Creates the application.properties file for the Java application with database and RabbitMQ configurations.
+Sets up environment variables in the .env file.
+Updates the pom.xml file with Spring Boot dependencies.
+RabbitMQ Configuration:
 
-12. Build Java Application
-Builds the Java application using Maven.
+Starts and enables RabbitMQ.
+Application Build and Deployment:
 
-13. Create Systemd Service File
-Creates a systemd service file to manage the Java application.
+Resolves Maven dependencies.
+Builds the Java application.
+Sets up a systemd service for the application.
+Nginx Configuration:
 
-14. Start and Enable Application Service
-Starts and enables the Java application service.
+Installs and configures Nginx as a reverse proxy.
+Enables the site and removes the default configuration.
+Logging Configuration:
 
-15. Add Nginx Signing Key and Repository
-Adds the Nginx signing key and repository to the system.
+Sets up logging for the application.
+Configures log rotation for the application's logs.
+Handlers
+Restart Application Service:
+Restarts the Java application service.
 
-16. Install Nginx
-Installs the specified version of Nginx.
-
-17. Configure Nginx Reverse Proxy
-Sets up Nginx as a reverse proxy for the Java application.
-
-18. Enable Nginx Site
-Enables the Nginx site configuration and removes the default configuration.
-
-19. Create Log Directory
-Creates a directory for application logs.
-
-20. Set Up Logging in .env
-Configures logging paths in the .env file.
-
-21. Configure Log Rotation
-Sets up log rotation for application logs.
-
-## Handlers
-Reload Nginx: Reloads Nginx configuration when changes are made.
-
-## Usage
-1. Ensure you have Ansible installed on your control machine.
-
-2. Update the hosts file or inventory with your target host.
+Reload Nginx:
+Reloads Nginx to apply the new configuration.
 
 3. Run the playbook using the command:
 ```bash
