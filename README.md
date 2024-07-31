@@ -4,28 +4,28 @@ This Ansible playbook sets up a Java boilerplate application on a fresh Ubuntu 2
 
 ## Prerequisites
 
-Ansible installed on your local machine.
-A fresh Ubuntu 22.04 server with SSH access.
-User with sudo privileges.
+- Ansible installed on your local machine.
+- A fresh Ubuntu 22.04 server with SSH access.
+- User with sudo privileges.
 
 ## Playbook Details
 
-Playbook Name: Deploy and configure Java boilerplate application
-Host: hng
-User: hng (created during playbook execution)
-Database User: admin
-Database Name: stage_5b_db
-Database Password: password
-Java Version: OpenJDK 17
-Maven Version: Latest available in Ubuntu repository
-Nginx Version: 1.26.*
+- Playbook Name: Deploy and configure Java boilerplate application
+- Host: hng
+- User: hng (created during playbook execution)
+- Database User: admin
+- Database Name: stage_5b_db
+- Database Password: password
+- Java Version: OpenJDK 17
+- Maven Version: Latest available in Ubuntu repository
+- Nginx Version: 1.26.*
 
 ## Installation
-Clone the Repository:
+1. Clone the Repository:
 
 bash
-Copy code
 git clone https://github.com/hngprojects/hng_boilerplate_java_web.git -b devops /opt/stage_5b
+
 Update the Ansible Inventory:
 Add your server details to the Ansible inventory file.
 
