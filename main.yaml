@@ -131,13 +131,6 @@
           WantedBy=multi-user.target
         dest: /etc/systemd/system/stage_5b.service
 
-    - name: Start and enable application service
-      systemd:
-        name: stage_5b
-        state: started
-        enabled: yes
-        daemon_reload: yes
-
     - name: Add Nginx signing key
       apt_key:
         url: https://nginx.org/keys/nginx_signing.key
@@ -180,14 +173,14 @@
     - name: Enable Nginx site
       file:
         src: /etc/nginx/sites-available/stage_5b
-        dest: /etc/nginx/sites-enabled/stage_5b
+        dest: /etc/nginx/conf.d/stage_5b.conf
         state: link
       notify:
         - Reload Nginx
 
     - name: Remove default Nginx configuration
       file:
-        path: /etc/nginx/sites-enabled/default
+        path: /etc/nginx/conf.d/default.conf
         state: absent
       notify:
         - Reload Nginx
@@ -227,6 +220,13 @@
           }
 
   handlers:
+    - name: Start and enable application service
+      systemd:
+        name: stage_5b
+        state: started
+        enabled: yes
+        daemon_reload: yes
+        
     - name: Reload Nginx
       systemd:
         name: nginx
