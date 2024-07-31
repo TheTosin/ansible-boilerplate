@@ -55,11 +55,11 @@
     - name: Configure PostgreSQL
       block:
         - name: Create PostgreSQL user
-          command: sudo -u postgres psql -c "CREATE USER '{{ db_user }}' WITH PASSWORD '{{ db_password }}'; ALTER USER '{{ db_user }}' WITH SUPERUSER;"
+          command: sudo -u postgres psql -c "CREATE USER {{ db_user }} WITH PASSWORD '{{ db_password }}'; ALTER USER {{ db_user }} WITH SUPERUSER;"
           ignore_errors: yes
 
         - name: Create PostgreSQL database
-          command: sudo -u postgres psql -c "CREATE DATABASE '{{ db_name }}' OWNER '{{ db_user }}';"
+          command: sudo -u postgres psql -c "CREATE DATABASE {{ db_name }} OWNER {{ db_user }};"
           ignore_errors: yes
 
     - name: Ensure /var/secrets directory exists
@@ -102,26 +102,10 @@
       args:
         chdir: /opt/stage_5b
 
-    - name: Create application.properties
-      copy:
-        content: |
-          spring.datasource.url=jdbc:postgresql://localhost:5432/{{ db_name }}
-          spring.datasource.username={{ db_user }}
-          spring.datasource.password={{ db_password }}
-          spring.jpa.hibernate.ddl-auto=update
-          server.port=3000
-          spring.rabbitmq.host=localhost
-          spring.rabbitmq.port=5672
-          spring.rabbitmq.username=guest
-          spring.rabbitmq.password=guest
-          #spring.flyway.enabled=true
-          #spring.flyway.baseline-on-migrate=true
-          #spring.flyway.location=classpath:db/migration
-          #spring.flyway.url=jdbc:postgresql://localhost:5432/{{ db_name }}
-          #spring.flyway.user={{ db_user }}
-          #spring.flyway.password={{ db_password }}
-          #spring.flyway.baseline-version=1
-        dest: "/opt/stage_5b/src/main/resources/application.properties"
+    - name: Copy application.properties 
+      template:
+        src: application.properties.j2
+        dest: /opt/stage_5b/src/main/resources/application.properties
 
     - name: Build Java application
       command: mvn clean package
