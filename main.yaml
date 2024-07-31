@@ -124,7 +124,7 @@
         dest: "/opt/stage_5b/src/main/resources/application.properties"
 
     - name: Build Java application
-      command: ./mvnw clean package
+      command: mvn clean package
       args:
         chdir: /opt/stage_5b
 
