@@ -22,59 +22,57 @@ This Ansible playbook sets up a Java boilerplate application on a fresh Ubuntu 2
 
 ## Installation
 1. Clone the Repository:
-
-bash
+```bash
 git clone https://github.com/hngprojects/hng_boilerplate_java_web.git -b devops /opt/stage_5b
-
-Update the Ansible Inventory:
+```
+2. Update the Ansible Inventory:
 Add your server details to the Ansible inventory file.
 
-Run the Playbook:
-
-css
-Copy code
-ansible-playbook -i inventory_file playbook.yml
+3. Run the Playbook:
+```bash
+ansible-playbook -i inventory.cfg playbook.yaml
+```
 
 ## Tasks Overview
-1. System Update and Package Installation:
-Updates the apt cache.
-Installs required packages including Git, OpenJDK, Maven, PostgreSQL, RabbitMQ, and Nginx.
-User Setup:
+1. **System Update and Package Installation**:
+- Updates the apt cache.
+- Installs required packages including Git, OpenJDK, Maven, PostgreSQL, RabbitMQ, and Nginx.
 
-Creates a user hng with sudo privileges.
-Repository Setup:
+2. **User Setup**:
+- Creates a user hng with sudo privileges.
+  
+3. **Repository Setup**:
+- Clones the Java boilerplate application repository.
 
-Clones the Java boilerplate application repository.
-Database Configuration:
+ 4. **Database Configuration**:
+- Sets up PostgreSQL with a new user and database.
+- Saves PostgreSQL credentials securely.
 
-Sets up PostgreSQL with a new user and database.
-Saves PostgreSQL credentials securely.
-Environment Configuration:
+5. **Environment Configuration**:
+- Sets up environment variables in the .env file.
+- Updates the pom.xml file with Spring Boot dependencies.
 
-Sets up environment variables in the .env file.
-Updates the pom.xml file with Spring Boot dependencies.
-RabbitMQ Configuration:
+6. **RabbitMQ Configuration**:
+- Starts and enables RabbitMQ.
 
-Starts and enables RabbitMQ.
-Application Build and Deployment:
+7. **Application Build and Deployment**:
+- Resolves Maven dependencies.
+- Builds the Java application.
+- Sets up a systemd service for the application.
 
-Resolves Maven dependencies.
-Builds the Java application.
-Sets up a systemd service for the application.
-Nginx Configuration:
+8. **Nginx Configuration**:
+- Installs and configures Nginx as a reverse proxy.
+- Enables the site and removes the default configuration.
 
-Installs and configures Nginx as a reverse proxy.
-Enables the site and removes the default configuration.
-Logging Configuration:
+9. **Logging Configuration**:
+- Sets up logging for the application.
+- Configures log rotation for the application's logs.
 
-Sets up logging for the application.
-Configures log rotation for the application's logs.
-Handlers
-Restart Application Service:
-Restarts the Java application service.
-
-Reload Nginx:
-Reloads Nginx to apply the new configuration.
+### Handlers
+- **Restart Application Service**:
+  Restarts the Java application service.
+- **Reload Nginx**:
+  Reloads Nginx to apply the new configuration.
 
 3. Run the playbook using the command:
 ```bash
